@@ -2,135 +2,129 @@
 <html>
 <head>
 <meta charset="UTF-8">
-<title>Monitor de Ambiente</title>
+<title>Control de Movimiento - Ultrasónico</title>
 
 <style>
 body {
-  background: linear-gradient(135deg, #1e1e2f, #2c2c54);
+  background: #1e1e2f;
   color: white;
   font-family: Arial, sans-serif;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: 20px;
-  min-height: 100vh;
+  text-align: center;
   margin: 0;
+  overflow-x: hidden;
 }
 
-.card {
-  padding: 30px;
-  width: 280px;
-  border-radius: 20px;
-  background: rgba(255,255,255,0.05);
-  box-shadow: 0 10px 30px rgba(0,0,0,0.5);
-  backdrop-filter: blur(10px);
-}
-
-.valor {
-  font-size: 50px;
-  font-weight: bold;
-  margin: 15px 0;
-}
-
-.barra {
-  width: 100%;
-  height: 15px;
+.escenario {
+  position: relative;
+  width: 90%;
+  height: 200px;
+  margin: 50px auto;
   background: #333;
+  border-bottom: 5px solid #555;
   border-radius: 10px;
   overflow: hidden;
 }
 
-.progreso {
-  height: 100%;
-  width: 0%;
-  transition: 0.8s ease-in-out;
+/* El Carrito */
+#carrito {
+  position: absolute;
+  bottom: 10px;
+  left: 0%; /* Esto lo moveremos con JS */
+  font-size: 50px;
+  transition: all 0.5s ease-out;
 }
 
-.estado {
-  margin-top: 15px;
-  font-size: 16px;
-  text-transform: uppercase;
-  letter-spacing: 1px;
+.lineas-pista {
+  position: absolute;
+  top: 50%;
+  width: 100%;
+  height: 2px;
+  border-top: 2px dashed #777;
+}
+
+.panel-info {
+  background: rgba(255,255,255,0.1);
+  display: inline-block;
+  padding: 20px;
+  border-radius: 15px;
+}
+
+#distancia-texto {
+  font-size: 40px;
+  font-weight: bold;
+  color: #00ff88;
 }
 </style>
-
 </head>
 <body>
 
-<div class="card">
-  <h2>💧 Humedad</h2>
-  <div class="valor" id="val-hum">--%</div>
-  <div class="barra">
-    <div class="progreso" id="bar-hum"></div>
-  </div>
-  <div id="est-hum" class="estado">Cargando...</div>
-</div>
+  <h1>📡 Monitor Ultrasónico</h1>
 
-<div class="card">
-  <h2>🌡️ Temperatura</h2>
-  <div class="valor" id="val-temp">--°C</div>
-  <div class="barra">
-    <div class="progreso" id="bar-temp"></div>
+  <div class="panel-info">
+    <p>Distancia del Sensor:</p>
+    <div id="distancia-texto">-- cm</div>
   </div>
-  <div id="est-temp" class="estado">Cargando...</div>
-</div>
+
+  <div class="escenario">
+    <div class="lineas-pista"></div>
+    <div id="carrito">🚗</div> 
+  </div>
+
+  <p id="estado">Conectando con TagoIO...</p>
 
 <script>
-const token = "c59bdf0e-30f2-4b0a-b931-9c3fd843229b";
+// 🔐 TU TOKEN
+const token = "e8e28909-6ba4-4f64-8ce4-e301adfd7a85";
 
-async function consultarTago(variable) {
+async function obtenerDistancia() {
   try {
-    const res = await fetch(`https://api.tago.io/data?variable=${variable}&qty=1`, {
+    const res = await fetch("https://api.tago.io/data?variable=Distance&qty=1", {
       headers: { "Device-Token": token }
     });
     const data = await res.json();
-    return data.result && data.result.length > 0 ? data.result[0].value : null;
-  } catch (e) {
-    console.error("Error con " + variable, e);
-    return null;
+
+    if(data.result && data.result.length > 0){
+      let valor = parseFloat(data.result[0].value).toFixed(1);
+      actualizarAnimacion(valor);
+    }
+  } catch (error) {
+    console.log("Error:", error);
+    document.getElementById("estado").innerText = "Error de conexión";
   }
 }
 
-async function actualizarTodo() {
-  const hum = await consultarTago("Humidity");
-  const temp = await consultarTago("Temperature");
-
-  if (hum !== null) actualizarInterfaz("hum", hum, "%");
-  if (temp !== null) actualizarInterfaz("temp", temp, "°C");
-}
-
-function actualizarInterfaz(tipo, valor, unidad) {
-  const valEl = document.getElementById(`val-${tipo}`);
-  const barEl = document.getElementById(`bar-${tipo}`);
-  const estEl = document.getElementById(`est-${tipo}`);
-
-  valEl.innerText = valor + unidad;
+function actualizarAnimacion(distancia) {
+  const carro = document.getElementById("carrito");
+  const texto = document.getElementById("distancia-texto");
   
-  // Ajuste de barra (asumiendo max 100 para ambos por simplicidad)
-  barEl.style.width = Math.min(valor, 100) + "%";
+  texto.innerText = distancia + " cm";
 
-  let color = "";
-  let texto = "";
+  // LÓGICA DE MOVIMIENTO:
+  // Supongamos que tu sensor mide de 2cm a 100cm.
+  // Convertimos ese rango a porcentaje (0% a 90% de la pantalla)
+  
+  let maxDistancia = 50; // Ajusta esto según el largo de tu mesa o proyecto
+  let porcentaje = (distancia / maxDistancia) * 90;
 
-  if (tipo === "hum") {
-    if (valor < 30) { color = "#ff4d4d"; texto = "Seco 🥵"; }
-    else if (valor < 60) { color = "#ffaa00"; texto = "Normal 🙂"; }
-    else { color = "#00ff88"; texto = "Húmedo 💧"; }
+  // Limitar para que el carro no se salga de la pantalla
+  if (porcentaje > 90) porcentaje = 90;
+  if (porcentaje < 0) porcentaje = 0;
+
+  // Aplicar movimiento
+  carro.style.left = porcentaje + "%";
+
+  // Cambiar color del texto si está muy cerca
+  if (distancia < 10) {
+    texto.style.color = "#ff4d4d"; // Rojo (Peligro)
+    document.getElementById("estado").innerText = "¡Objeto muy cerca!";
   } else {
-    // Lógica para temperatura
-    if (valor < 18) { color = "#00d4ff"; texto = "Frío ❄️"; }
-    else if (valor < 30) { color = "#00ff88"; texto = "Ideal 🌡️"; }
-    else { color = "#ff4d4d"; texto = "Caliente 🔥"; }
+    texto.style.color = "#00ff88"; // Verde (Ok)
+    document.getElementById("estado").innerText = "Distancia normal";
   }
-
-  barEl.style.background = color;
-  valEl.style.color = color;
-  estEl.innerText = texto;
 }
 
-setInterval(actualizarTodo, 5000);
-actualizarTodo();
+// Actualizar cada segundo para que el movimiento sea fluido
+setInterval(obtenerDistancia, 1000);
 
 </script>
 </body>
