@@ -1,79 +1,137 @@
 <!DOCTYPE html>
-<html lang="es">
+<html>
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dashboard Mecatrónica - Santiago</title>
-    <style>
-        body { font-family: 'Segoe UI', sans-serif; background-color: #0b0e11; color: #e9ecef; text-align: center; padding: 50px; }
-        .container { display: flex; justify-content: center; gap: 20px; flex-wrap: wrap; }
-        .card { background: #1a1d21; border: 1px solid #343a40; border-radius: 15px; padding: 25px; width: 200px; box-shadow: 0 4px 15px rgba(0,0,0,0.5); }
-        .card h3 { color: #00d4ff; margin-bottom: 10px; font-size: 1.1rem; }
-        .value { font-size: 2.5rem; font-weight: bold; margin: 10px 0; }
-        .unit { color: #6c757d; font-size: 1rem; }
-        .status { margin-top: 20px; font-size: 0.8rem; color: #28a745; }
-    </style>
+<meta charset="UTF-8">
+<title>Monitor de Ambiente</title>
+
+<style>
+body {
+  background: linear-gradient(135deg, #1e1e2f, #2c2c54);
+  color: white;
+  font-family: Arial, sans-serif;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 20px;
+  min-height: 100vh;
+  margin: 0;
+}
+
+.card {
+  padding: 30px;
+  width: 280px;
+  border-radius: 20px;
+  background: rgba(255,255,255,0.05);
+  box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+  backdrop-filter: blur(10px);
+}
+
+.valor {
+  font-size: 50px;
+  font-weight: bold;
+  margin: 15px 0;
+}
+
+.barra {
+  width: 100%;
+  height: 15px;
+  background: #333;
+  border-radius: 10px;
+  overflow: hidden;
+}
+
+.progreso {
+  height: 100%;
+  width: 0%;
+  transition: 0.8s ease-in-out;
+}
+
+.estado {
+  margin-top: 15px;
+  font-size: 16px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+</style>
+
 </head>
 <body>
 
-    <h1>PROYECTO MECATRÓNICA 2026</h1>
-    <p>Datos en tiempo real desde ESP32</p>
+<div class="card">
+  <h2>💧 Humedad</h2>
+  <div class="valor" id="val-hum">--%</div>
+  <div class="barra">
+    <div class="progreso" id="bar-hum"></div>
+  </div>
+  <div id="est-hum" class="estado">Cargando...</div>
+</div>
 
-    <div class="container">
-        <div class="card">
-            <h3>Temperatura</h3>
-            <div id="temp" class="value">--</div>
-            <span class="unit">°C</span>
-        </div>
-        <div class="card">
-            <h3>Humedad</h3>
-            <div id="hum" class="value">--</div>
-            <span class="unit">%</span>
-        </div>
-        <div class="card">
-            <h3>Índice Calor</h3>
-            <div id="hic" class="value">--</div>
-            <span class="unit">°C</span>
-        </div>
-    </div>
+<div class="card">
+  <h2>🌡️ Temperatura</h2>
+  <div class="valor" id="val-temp">--°C</div>
+  <div class="barra">
+    <div class="progreso" id="bar-temp"></div>
+  </div>
+  <div id="est-temp" class="estado">Cargando...</div>
+</div>
 
-    <p id="update-time" class="status">Esperando datos...</p>
+<script>
+const token = "c59bdf0e-30f2-4b0a-b931-9c3fd843229b";
 
-    <script>
-        // --- CONFIGURACIÓN IMPORTANTE ---
-        // El Device-Token es el mismo que usaste en Arduino
-        const DEVICE_TOKEN = "c59bdf0e-30f2-4b0a-b931-9c3fd843229b"; 
+async function consultarTago(variable) {
+  try {
+    const res = await fetch(`https://api.tago.io/data?variable=${variable}&qty=1`, {
+      headers: { "Device-Token": token }
+    });
+    const data = await res.json();
+    return data.result && data.result.length > 0 ? data.result[0].value : null;
+  } catch (e) {
+    console.error("Error con " + variable, e);
+    return null;
+  }
+}
 
-        async function leerTagoIO() {
-            const url = "https://api.tago.io/data?qty=1";
-            
-            try {
-                const response = await fetch(url, {
-                    method: 'GET',
-                    headers: { 'Device-Token': DEVICE_TOKEN }
-                });
-                const data = await response.json();
+async function actualizarTodo() {
+  const hum = await consultarTago("Humidity");
+  const temp = await consultarTago("Temperature");
 
-                if (data.status && data.result.length > 0) {
-                    // Buscamos las variables en los resultados
-                    data.result.forEach(item => {
-                        if (item.variable === "Temperature") document.getElementById('temp').innerText = item.value;
-                        if (item.variable === "Humidity") document.getElementById('hum').innerText = item.value;
-                        if (item.variable === "HIndex") document.getElementById('hic').innerText = item.value;
-                    });
-                    
-                    const ahora = new Date().toLocaleTimeString();
-                    document.getElementById('update-time').innerText = "Última actualización: " + ahora;
-                }
-            } catch (error) {
-                console.error("Error al leer de TagoIO:", error);
-                document.getElementById('update-time').innerText = "Error de conexión";
-            }
-        }
+  if (hum !== null) actualizarInterfaz("hum", hum, "%");
+  if (temp !== null) actualizarInterfaz("temp", temp, "°C");
+}
 
-        // Actualizar la pantalla cada 5 segundos
-        setInterval(leerTagoIO, 5000);
-        leerTagoIO(); // Carga inicial
-    </script>
+function actualizarInterfaz(tipo, valor, unidad) {
+  const valEl = document.getElementById(`val-${tipo}`);
+  const barEl = document.getElementById(`bar-${tipo}`);
+  const estEl = document.getElementById(`est-${tipo}`);
+
+  valEl.innerText = valor + unidad;
+  
+  // Ajuste de barra (asumiendo max 100 para ambos por simplicidad)
+  barEl.style.width = Math.min(valor, 100) + "%";
+
+  let color = "";
+  let texto = "";
+
+  if (tipo === "hum") {
+    if (valor < 30) { color = "#ff4d4d"; texto = "Seco 🥵"; }
+    else if (valor < 60) { color = "#ffaa00"; texto = "Normal 🙂"; }
+    else { color = "#00ff88"; texto = "Húmedo 💧"; }
+  } else {
+    // Lógica para temperatura
+    if (valor < 18) { color = "#00d4ff"; texto = "Frío ❄️"; }
+    else if (valor < 30) { color = "#00ff88"; texto = "Ideal 🌡️"; }
+    else { color = "#ff4d4d"; texto = "Caliente 🔥"; }
+  }
+
+  barEl.style.background = color;
+  valEl.style.color = color;
+  estEl.innerText = texto;
+}
+
+setInterval(actualizarTodo, 5000);
+actualizarTodo();
+
+</script>
 </body>
 </html>
