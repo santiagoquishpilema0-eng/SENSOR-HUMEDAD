@@ -2,31 +2,41 @@
 <html lang="es">
 <head>
 <meta charset="UTF-8">
-<title>🚀 Sensor Ultrasónico PRO</title>
-
-<!-- CSS -->
+<title>🚀 Sensor Ultrasónico PRO+</title>
 <link rel="stylesheet" href="style.css">
+
+<!-- Librería para gráfica -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
 </head>
 <body>
 
-<h1 class="titulo">🚀 Sensor Ultrasónico EN VIVO</h1>
+<h1 class="titulo">📡 Sensor Ultrasónico EN VIVO</h1>
 
 <div class="card">
 
   <div id="txt-dist" class="medidor">-- cm</div>
 
   <div id="alerta-choque" class="alerta">
-    ⚠️ ¡COLISIÓN DETECTADA!
+    ⚠️ ¡COLISIÓN!
   </div>
 
+  <!-- Radar -->
+  <div class="radar">
+    <div class="onda" id="onda"></div>
+    <div class="punto"></div>
+  </div>
+
+  <!-- Pista -->
   <div class="pista">
     <div id="carro">🚗</div>
   </div>
 
+  <!-- Gráfica -->
+  <canvas id="grafica"></canvas>
+
 </div>
 
-<!-- JS -->
 <script src="script.js"></script>
 
 </body>
