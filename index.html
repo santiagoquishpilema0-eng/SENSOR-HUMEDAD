@@ -1,90 +1,29 @@
 <!DOCTYPE html>
-<html>
+<html lang="es">
 <head>
 <meta charset="UTF-8">
-<title>Control de Carro - Ultrasónico</title>
-<style>
-  body { background: #1e1e2f; color: white; font-family: sans-serif; text-align: center; }
-  
-  .pista {
-    position: relative;
-    width: 80%;
-    height: 120px;
-    margin: 50px auto;
-    background: #333;
-    border-bottom: 4px solid #555;
-    border-radius: 15px;
-  }
+<title>🚀 Sensor Ultrasónico PRO</title>
 
-  #carro {
-    position: absolute;
-    bottom: 10px;
-    left: 0%;
-    font-size: 60px;
-    transition: left 0.3s ease-out; /* Animación suave */
-  }
+<!-- CSS -->
+<link rel="stylesheet" href="style.css">
 
-  .medidor {
-    font-size: 48px;
-    margin: 20px;
-    color: #00ff88;
-  }
-
-  .alerta { color: #ff4d4d; font-weight: bold; display: none; }
-</style>
 </head>
 <body>
 
-  <h1>Control de Interfaz por Distancia</h1>
-  
-  <div class="medidor" id="txt-dist">-- cm</div>
-  <div id="alerta-choque" class="alerta">¡COLISIÓN DETECTADA! ⚠️</div>
+<h1>🚀 PRUEBA NUEVA - Sensor Ultrasónico</h1>
 
-  <div class="pista">
-    <div id="carro">🚗</div>
-  </div>
+<div class="medidor" id="txt-dist">-- cm</div>
 
-<script>
-const token = "e8e28909-6ba4-4f64-8ce4-e301adfd7a85";
+<div id="alerta-choque" class="alerta">
+⚠️ ¡COLISIÓN DETECTADA!
+</div>
 
-async function actualizar() {
-  try {
-    const res = await fetch("https://api.tago.io/data?variable=Distance&qty=1", {
-      headers: { "Device-Token": token }
-    });
-    const data = await res.json();
+<div class="pista">
+  <div id="carro">🚗</div>
+</div>
 
-    if(data.result && data.result.length > 0){
-      let d = parseFloat(data.result[0].value);
-      moverCarro(d);
-    }
-  } catch (e) { console.log("Error:", e); }
-}
+<!-- JS -->
+<script src="script.js"></script>
 
-function moverCarro(distancia) {
-  const carro = document.getElementById("carro");
-  const texto = document.getElementById("txt-dist");
-  const alerta = document.getElementById("alerta-choque");
-
-  texto.innerText = distancia.toFixed(1) + " cm";
-
-  // Lógica para detectar el "Cero" o proximidad extrema
-  if (distancia <= 2) {
-    carro.style.left = "0%";
-    texto.style.color = "#ff4d4d";
-    alerta.style.display = "block";
-  } else {
-    // Mapeo: 50cm será el final de la pista (90%)
-    let pos = (distancia / 50) * 90;
-    if (pos > 90) pos = 90;
-    
-    carro.style.left = pos + "%";
-    texto.style.color = "#00ff88";
-    alerta.style.display = "none";
-  }
-}
-
-setInterval(actualizar, 1000);
-</script>
 </body>
 </html>
