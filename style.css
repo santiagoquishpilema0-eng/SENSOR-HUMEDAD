@@ -1,36 +1,55 @@
-body {
-  background: #1e1e2f;
-  color: white;
-  font-family: sans-serif;
-  text-align: center;
+console.log("JS CONECTADO OK");
+
+const token = "e8e28909-6ba4-4f64-8ce4-e301adfd7a85";
+const variable = "Distance";
+
+async function actualizar() {
+  try {
+    const res = await fetch(`https://api.tago.io/data?variable=${variable}&qty=1`, {
+      headers: { "Device-Token": token }
+    });
+
+    if (!res.ok) throw new Error("Error en API");
+
+    const data = await res.json();
+
+    if (!data.result || data.result.length === 0) {
+      console.log("Sin datos");
+      return;
+    }
+
+    let distancia = parseFloat(data.result[0].value);
+
+    if (isNaN(distancia)) return;
+
+    moverCarro(distancia);
+
+  } catch (error) {
+    console.log("Error:", error);
+  }
 }
 
-.pista {
-  position: relative;
-  width: 80%;
-  height: 120px;
-  margin: 50px auto;
-  background: #333;
-  border-bottom: 4px solid #555;
-  border-radius: 15px;
+function moverCarro(distancia) {
+  const carro = document.getElementById("carro");
+  const texto = document.getElementById("txt-dist");
+  const alerta = document.getElementById("alerta-choque");
+
+  texto.innerText = distancia.toFixed(1) + " cm";
+
+  if (distancia <= 2) {
+    carro.style.left = "0%";
+    texto.style.color = "#ff4d4d";
+    alerta.style.display = "block";
+  } else {
+    let pos = (distancia / 50) * 90;
+    if (pos > 90) pos = 90;
+
+    carro.style.left = pos + "%";
+    texto.style.color = "#00ff88";
+    alerta.style.display = "none";
+  }
 }
 
-#carro {
-  position: absolute;
-  bottom: 10px;
-  left: 0%;
-  font-size: 60px;
-  transition: left 0.3s ease-out;
-}
-
-.medidor {
-  font-size: 48px;
-  margin: 20px;
-  color: #00ff88;
-}
-
-.alerta {
-  color: #ff4d4d;
-  font-weight: bold;
-  display: none;
-}
+// actualización en tiempo real
+setInterval(actualizar, 1000);
+actualizar();
