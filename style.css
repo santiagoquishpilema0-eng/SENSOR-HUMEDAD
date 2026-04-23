@@ -1,0 +1,36 @@
+body {
+  background: #1e1e2f;
+  color: white;
+  font-family: sans-serif;
+  text-align: center;
+}
+
+.pista {
+  position: relative;
+  width: 80%;
+  height: 120px;
+  margin: 50px auto;
+  background: #333;
+  border-bottom: 4px solid #555;
+  border-radius: 15px;
+}
+
+#carro {
+  position: absolute;
+  bottom: 10px;
+  left: 0%;
+  font-size: 60px;
+  transition: left 0.3s ease-out;
+}
+
+.medidor {
+  font-size: 48px;
+  margin: 20px;
+  color: #00ff88;
+}
+
+.alerta {
+  color: #ff4d4d;
+  font-weight: bold;
+  display: none;
+}
