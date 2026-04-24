@@ -5,6 +5,7 @@ const estado = document.getElementById("estado");
 const texto = document.getElementById("txt-dist");
 const carro = document.getElementById("carro");
 const barra = document.getElementById("nivel");
+const root = document.documentElement;
 
 // gráfica
 const ctx = document.getElementById("grafica").getContext("2d");
@@ -43,29 +44,30 @@ async function actualizar() {
 function actualizarUI(d) {
   texto.innerText = d.toFixed(1) + " cm";
 
-  // mover carro
   let pos = Math.min((d / 50) * 100, 100);
   carro.style.left = pos + "%";
-
-  // barra
   barra.style.width = pos + "%";
 
-  // estados y colores
+  // 🔥 CAMBIO DE COLORES DINÁMICO
   if (d === 0) {
     estado.innerText = "SIN DETECCIÓN";
-    barra.style.background = "gray";
+    root.style.setProperty('--color', 'gray');
   } 
   else if (d <= 5) {
     estado.innerText = "PELIGRO";
-    barra.style.background = "red";
+    root.style.setProperty('--color', 'red');
   } 
   else if (d <= 20) {
-    estado.innerText = "OBJETO CERCA";
-    barra.style.background = "orange";
+    estado.innerText = "CERCA";
+    root.style.setProperty('--color', 'orange');
+  } 
+  else if (d <= 50) {
+    estado.innerText = "SEGURO";
+    root.style.setProperty('--color', 'lime');
   } 
   else {
     estado.innerText = "LIBRE";
-    barra.style.background = "lime";
+    root.style.setProperty('--color', 'cyan');
   }
 
   // gráfica
